@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no">
     <title>Linen Calculator</title>
     
     <!-- PWA and Mobile App Features -->
@@ -16,6 +17,14 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            /* Prevent iOS double-tap zoom */
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
         body {
@@ -114,6 +123,9 @@
             transition: all 0.3s;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             z-index: 1000;
+            /* Prevent iOS double-tap zoom */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .admin-toggle:hover {
@@ -256,6 +268,9 @@
             cursor: pointer;
             transition: all 0.2s;
             box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            /* Prevent iOS double-tap zoom specifically on buttons */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         
         /* Tablet */
@@ -316,6 +331,9 @@
             display: inline-block;
             margin: 10px;
             transition: all 0.2s;
+            /* Prevent iOS double-tap zoom */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .reset-btn {
@@ -484,6 +502,9 @@
             transition: all 0.2s;
             margin-right: 10px;
             margin-bottom: 10px;
+            /* Prevent iOS double-tap zoom */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .admin-btn:hover {
@@ -565,6 +586,19 @@
             height: 30px;
             cursor: pointer;
             font-size: 1em;
+            /* Prevent iOS double-tap zoom */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Allow text selection for specific elements */
+        .footer p, 
+        .form-group input,
+        .form-group textarea {
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
         }
 
         .hidden {
@@ -666,12 +700,34 @@
             }
         }
         
-        /* Tablet landscape optimization */
-        @media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
-            .items-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
+                 /* Tablet landscape optimization */
+         @media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+             .items-grid {
+                 grid-template-columns: repeat(3, 1fr);
+             }
+         }
+         
+         /* iOS Safari specific fixes */
+         @supports (-webkit-touch-callout: none) {
+             /* Additional iOS-specific zoom prevention */
+             body {
+                 -webkit-text-size-adjust: 100%;
+                 -ms-text-size-adjust: 100%;
+             }
+             
+             /* Prevent zoom on double-tap for all interactive elements */
+             button, 
+             .btn, 
+             .admin-toggle, 
+             .reset-btn, 
+             .share-btn, 
+             .admin-btn,
+             .delete-item,
+             .item-card {
+                 touch-action: manipulation !important;
+                 -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+             }
+         }
     </style>
 </head>
 <body>
@@ -1008,6 +1064,16 @@
                 }
             }, 3000);
         }
+
+        // Prevent iOS double-tap zoom with JavaScript
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
 
         // Initialize when page loads
         window.addEventListener('DOMContentLoaded', function() {
