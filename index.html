@@ -865,12 +865,29 @@
                 card.innerHTML = `
                     <div class="item-name">${item.icon} ${item.name}</div>
                     <div class="counter-section">
-                        <button class="btn" onclick="decreaseCount('${item.id}')">−</button>
+                        <button class="btn decrease-btn" data-item-id="${item.id}">−</button>
                         <div class="quantity" id="${item.id}-count">0</div>
-                        <button class="btn" onclick="increaseCount('${item.id}')">+</button>
+                        <button class="btn increase-btn" data-item-id="${item.id}">+</button>
                     </div>
                 `;
                 grid.appendChild(card);
+                
+                // Add event listeners for better rapid clicking support
+                const decreaseBtn = card.querySelector('.decrease-btn');
+                const increaseBtn = card.querySelector('.increase-btn');
+                
+                // Use click events for better compatibility
+                decreaseBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    decreaseCount(item.id);
+                });
+                
+                increaseBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    increaseCount(item.id);
+                });
             });
         }
 
@@ -947,6 +964,7 @@
 
         // Increase quantity
         function increaseCount(itemId) {
+            if (!counts[itemId]) counts[itemId] = 0; // Ensure it exists
             counts[itemId]++;
             updateDisplay(itemId);
             updateTotal();
@@ -954,6 +972,7 @@
 
         // Decrease quantity
         function decreaseCount(itemId) {
+            if (!counts[itemId]) counts[itemId] = 0; // Ensure it exists
             if (counts[itemId] > 0) {
                 counts[itemId]--;
                 updateDisplay(itemId);
@@ -965,7 +984,7 @@
         function updateDisplay(itemId) {
             const element = document.getElementById(`${itemId}-count`);
             if (element) {
-                element.textContent = counts[itemId];
+                element.textContent = counts[itemId] || 0;
             }
         }
 
@@ -1065,12 +1084,17 @@
             }, 3000);
         }
 
-        // Prevent iOS double-tap zoom with JavaScript
+        // Prevent iOS double-tap zoom with JavaScript (but allow button interactions)
         let lastTouchEnd = 0;
         document.addEventListener('touchend', function (event) {
+            // Don't prevent double-tap on interactive elements
+            if (event.target.matches('button, .btn, input, textarea, select')) {
+                return; // Allow normal button behavior
+            }
+            
             const now = (new Date()).getTime();
             if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
+                event.preventDefault(); // Only prevent zoom on non-interactive elements
             }
             lastTouchEnd = now;
         }, false);
