@@ -753,6 +753,9 @@
 
             <div class="footer">
                 <p>Click + to increase, click - to decrease quantity</p>
+                <p style="margin-top: 10px; font-size: 0.8em; color: #888;">
+                    💾 Your counts are automatically saved and will persist after page refresh
+                </p>
                 <p style="margin-top: 15px; font-weight: bold; color: #667eea;">Created by Ka Chun</p>
             </div>
         </div>
@@ -790,6 +793,13 @@
                 <p style="margin-top: 10px; color: #666; font-size: 0.9em;">
                     This will restore the original linen items and delete any custom items you've added.
                 </p>
+                
+                <br><br>
+                
+                <button class="admin-btn danger" onclick="clearTempSave()">Clear Temporary Save</button>
+                <p style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    This will clear your saved counts. All numbers will reset to 0 on next refresh.
+                </p>
             </div>
 
             <div class="button-container">
@@ -825,16 +835,29 @@
                 linenItems = [...defaultLinenItems];
             }
             
-            // Initialize counts
+            // Initialize counts - load from localStorage if available
             counts = {};
+            const savedCounts = localStorage.getItem('linenCounts');
+            const parsedCounts = savedCounts ? JSON.parse(savedCounts) : {};
+            
             linenItems.forEach(item => {
-                counts[item.id] = 0;
+                counts[item.id] = parsedCounts[item.id] || 0;
             });
         }
 
         // Save items to localStorage
         function saveItems() {
             localStorage.setItem('linenItems', JSON.stringify(linenItems));
+        }
+
+        // Save counts to localStorage (temp save feature)
+        function saveCounts() {
+            localStorage.setItem('linenCounts', JSON.stringify(counts));
+        }
+
+        // Clear saved counts from localStorage
+        function clearSavedCounts() {
+            localStorage.removeItem('linenCounts');
         }
 
         // Toggle between main calculator and backstage
@@ -851,6 +874,7 @@
                 mainCalculator.style.display = 'block';
                 backstage.style.display = 'none';
                 generateItemCards();
+                updateTotal(); // Make sure total is updated when returning to calculator
             }
         }
 
@@ -866,7 +890,7 @@
                     <div class="item-name">${item.icon} ${item.name}</div>
                     <div class="counter-section">
                         <button class="btn decrease-btn" data-item-id="${item.id}">−</button>
-                        <div class="quantity" id="${item.id}-count">0</div>
+                        <div class="quantity" id="${item.id}-count">${counts[item.id] || 0}</div>
                         <button class="btn increase-btn" data-item-id="${item.id}">+</button>
                     </div>
                 `;
@@ -927,6 +951,7 @@
             linenItems.push(newItem);
             counts[id] = 0;
             saveItems();
+            saveCounts(); // Save the updated counts
             
             // Clear form
             document.getElementById('newItemName').value = '';
@@ -943,6 +968,7 @@
                 linenItems = linenItems.filter(item => item.id !== itemId);
                 delete counts[itemId];
                 saveItems();
+                saveCounts(); // Save the updated counts
                 populateExistingItems();
                 showMessage('Item deleted successfully! 🗑️');
             }
@@ -957,9 +983,30 @@
                     counts[item.id] = 0;
                 });
                 saveItems();
+                saveCounts(); // Save the reset counts
                 populateExistingItems();
                 showMessage('Reset to default items! 🔄');
             }
+        }
+
+        // Clear temporary saved counts
+        function clearTempSave() {
+            if (confirm('This will clear your temporarily saved counts. All numbers will reset to 0. Are you sure?')) {
+                clearSavedCounts();
+                linenItems.forEach(item => {
+                    counts[item.id] = 0;
+                });
+                updateAllDisplays();
+                updateTotal();
+                showMessage('Temporary save cleared! 🗑️');
+            }
+        }
+
+        // Update all count displays
+        function updateAllDisplays() {
+            linenItems.forEach(item => {
+                updateDisplay(item.id);
+            });
         }
 
         // Increase quantity
@@ -968,6 +1015,7 @@
             counts[itemId]++;
             updateDisplay(itemId);
             updateTotal();
+            saveCounts(); // Save to localStorage for temp save
         }
 
         // Decrease quantity
@@ -977,6 +1025,7 @@
                 counts[itemId]--;
                 updateDisplay(itemId);
                 updateTotal();
+                saveCounts(); // Save to localStorage for temp save
             }
         }
 
@@ -1001,6 +1050,8 @@
                 updateDisplay(item.id);
             });
             updateTotal();
+            saveCounts(); // Save the reset state
+            showMessage('All counts reset! 🔄');
         }
 
         // Generate shareable results text
